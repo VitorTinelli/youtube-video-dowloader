@@ -1,0 +1,5 @@
+{
+  "folder_path": "C:/Users/Tinelli/Music/backgroundMusics",
+  "quality": "best",
+  "output": "{folder_path}/%(title)s.%(ext)s"
+}

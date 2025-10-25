@@ -1,0 +1,6 @@
+yt-dlp
+PyQt5
+Pillow
+requests
+pyperclip
+plyer
