@@ -18,8 +18,8 @@ echo Installing required Python packages...
 echo This may take a few minutes...
 echo.
 
-pip install --upgrade pip
-pip install -r requirements.txt
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
 
 if errorlevel 1 (
     echo.

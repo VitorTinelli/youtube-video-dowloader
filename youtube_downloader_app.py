@@ -37,6 +37,17 @@ class VideoInfoFetcher(QThread):
                 'quiet': True,
                 'no_warnings': True,
                 'extract_flat': False,
+                'socket_timeout': 30,
+                'http_headers': {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                    'Accept-Language': 'en-US,en;q=0.9',
+                    'Accept-Encoding': 'gzip, deflate',
+                    'DNT': '1',
+                    'Connection': 'keep-alive',
+                    'Upgrade-Insecure-Requests': '1'
+                },
+                'cookiefile': None,  # Will be set in downloader
+                'noplaylist': True,
             }
             
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -120,11 +131,30 @@ class VideoDownloader(QThread):
             # Check if FFmpeg is available
             ffmpeg_available = self.check_ffmpeg()
             
+            # Base options with anti-blocking measures
+            base_opts = {
+                'quiet': False,
+                'no_warnings': False,
+                'socket_timeout': 30,
+                'http_headers': {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                    'Accept-Language': 'en-US,en;q=0.9',
+                    'Accept-Encoding': 'gzip, deflate',
+                    'DNT': '1',
+                    'Connection': 'keep-alive',
+                    'Upgrade-Insecure-Requests': '1'
+                },
+                'cookiefile': os.path.join(self.download_path, 'cookies.txt'),
+                'noplaylist': True,
+                'progress_hooks': [self.progress_hook],
+            }
+            
             # Configure download options based on type
             if self.download_type == 'audio':
                 if ffmpeg_available:
                     # With FFmpeg: convert to MP3
                     ydl_opts = {
+                        **base_opts,
                         'format': 'bestaudio/best',
                         'outtmpl': os.path.join(self.download_path, '%(title)s.%(ext)s'),
                         'postprocessors': [{
@@ -132,14 +162,13 @@ class VideoDownloader(QThread):
                             'preferredcodec': 'mp3',
                             'preferredquality': '192',
                         }],
-                        'progress_hooks': [self.progress_hook],
                     }
                 else:
                     # Without FFmpeg: download best audio format (usually m4a/webm)
                     ydl_opts = {
+                        **base_opts,
                         'format': 'bestaudio/best',
                         'outtmpl': os.path.join(self.download_path, '%(title)s.%(ext)s'),
-                        'progress_hooks': [self.progress_hook],
                     }
             else:  # video
                 if self.quality == 'best':
@@ -151,9 +180,9 @@ class VideoDownloader(QThread):
                         format_str = f'best[height<={self.quality}]'
                 
                 ydl_opts = {
+                    **base_opts,
                     'format': format_str,
                     'outtmpl': os.path.join(self.download_path, '%(title)s.%(ext)s'),
-                    'progress_hooks': [self.progress_hook],
                 }
                 
                 # Only merge if FFmpeg is available
