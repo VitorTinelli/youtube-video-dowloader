@@ -57,12 +57,13 @@ class VideoInfoFetcher(QThread):
                 video_type = "Regular Video"
                 if '/shorts/' in self.url:
                     video_type = "YouTube Short"
+                elif '/clip/' in self.url or info.get('extractor') == 'youtube:clip':
+                    video_type = "YouTube Clip"
                 elif info.get('is_live'):
                     video_type = "Live Stream (Active)"
                 elif info.get('was_live'):
                     video_type = "Live Stream (Recorded)"
                 
-                # Get available formats
                 formats = []
                 if info.get('formats'):
                     for fmt in info['formats']:
@@ -70,10 +71,16 @@ class VideoInfoFetcher(QThread):
                             formats.append(fmt['height'])
                     formats = sorted(list(set(formats)), reverse=True)
                 
+                duration_value = info.get('duration', 0)
+                try:
+                    duration_value = float(duration_value) if duration_value is not None else 0.0
+                except Exception:
+                    duration_value = 0.0
+
                 video_data = {
                     'title': info.get('title', 'Unknown'),
                     'thumbnail': info.get('thumbnail', ''),
-                    'duration': info.get('duration', 0),
+                    'duration': duration_value,
                     'uploader': info.get('uploader', 'Unknown'),
                     'video_type': video_type,
                     'formats': formats,
@@ -597,12 +604,16 @@ class YouTubeDownloaderApp(QMainWindow):
         self.title_label.setText(f"Title: {video_data['title']}")
         self.type_label.setText(f"Type: {video_data['video_type']}")
         
-        # Format duration
-        duration_sec = video_data['duration']
+        # Format duration (ensure integer seconds)
+        try:
+            duration_sec = int(float(video_data.get('duration', 0) or 0))
+        except Exception:
+            duration_sec = 0
+
         hours = duration_sec // 3600
         minutes = (duration_sec % 3600) // 60
         seconds = duration_sec % 60
-        
+
         if hours > 0:
             duration_str = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
         else:

@@ -1,5 +1,0 @@
-{
-  "folder_path": "C:/Users/Vitor Tinelli/Downloads",
-  "quality": "best",
-  "output": "{folder_path}/%(title)s.%(ext)s"
-}
